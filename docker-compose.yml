@@ -1,0 +1,71 @@
+version: '3.0'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+    env_file:
+      - env/zookeeper.env
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    ports:
+      - 9092:9092
+      - 29092:29092
+    depends_on:
+      - zookeeper
+    env_file:
+      - env/kafka.env
+
+  mysql:
+    image: debezium/example-mysql:1.0
+    container_name: mysql
+    ports:
+      - 3306:3306
+    env_file:
+      - env/mysql.env
+
+  connect:
+    image: debezium/connect:1.0
+    container_name: connect
+    ports:
+      - 8083:8083
+    depends_on:
+      - kafka
+      - mysql
+    env_file:
+      - env/connectors.env
+
+  streamsvc:
+    image: cdc-ingestion
+    container_name: streamsvc
+    build:
+      context: .
+      dockerfile: pyspark.Dockerfile
+    volumes:
+      - ./:/app
+    command: ["./main.py"]
+    depends_on:
+      - kafka
+      - mysql
+      - connect
+    env_file:
+      - env/kafka.env
+      - env/mysql.env
+      - env/connectors.env
+
+  watcher:
+    image: quay.io/debezium/kafka:1.9
+    container_name: watcher
+    depends_on:
+      - kafka
+      - mysql
+      - connect
+      - streamsvc
+    command: ["watch-topic", "-a", "-k", "dbserver1.inventory.customers"]
+    env_file:
+      - env/kafka.env
