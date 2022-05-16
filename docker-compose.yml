@@ -30,7 +30,7 @@ services:
       - env/mysql.env
 
   connect:
-    image: debezium/connect:2.0
+    image: debezium/connect:1.9
     container_name: connect
     ports:
       - 8083:8083
@@ -40,13 +40,18 @@ services:
     env_file:
       - env/connectors.env
 
-  apicurio:
-    image: apicurio/apicurio-registry-mem:2.1.5.Final
-    container_name: apicurio
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    container_name: schema-registry
     ports:
-      - 8080:8080
+      - 8081:8081
     depends_on:
       - connect
+    environment:
+      - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=zookeeper:2181
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+      - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081
+      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=kafka:9092
 
   streamsvc:
     image: cdc-ingestion
@@ -65,6 +70,7 @@ services:
       - env/kafka.env
       - env/mysql.env
       - env/connectors.env
+    restart: on-failure
 
   watcher:
     image: quay.io/debezium/kafka:1.9
