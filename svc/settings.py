@@ -23,7 +23,5 @@ MYSQL_CONNECTOR_SETTING = {
         "database.include.list": INCLUDED_DATABASE,
         "database.history.kafka.bootstrap.servers": KAFKA_BOOSTRAP_SERVERS,
         "database.history.kafka.topic": "dbhistory.inventory",
-        "key.converter.schemas.enable": False,
-        "value.converter.schemas.enable": False,
     }
 }

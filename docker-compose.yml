@@ -30,7 +30,7 @@ services:
       - env/mysql.env
 
   connect:
-    image: debezium/connect:1.0
+    image: debezium/connect:2.0
     container_name: connect
     ports:
       - 8083:8083
@@ -39,6 +39,14 @@ services:
       - mysql
     env_file:
       - env/connectors.env
+
+  apicurio:
+    image: apicurio/apicurio-registry-mem:2.1.5.Final
+    container_name: apicurio
+    ports:
+      - 8080:8080
+    depends_on:
+      - connect
 
   streamsvc:
     image: cdc-ingestion
