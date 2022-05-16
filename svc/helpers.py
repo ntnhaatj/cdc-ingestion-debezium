@@ -1,17 +1,24 @@
-from . import settings
 import requests
 import backoff
 import json
+from io import BytesIO
+from struct import unpack
+
 from pyspark.sql.session import SparkSession
 from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.types import StructType
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StructType, StringType
+from fastavro import (parse_schema, schemaless_reader)
+
+from svc import settings
+from svc.exceptions import SerializationError
+from schemas import schema_registry
 
 
 @backoff.on_exception(backoff.expo,
-                      Exception,
-                      max_tries=5,
-                      max_time=60,
-                      jitter=None)
+                      (Exception,),
+                      factor=10,
+                      max_tries=5)
 def configure_mysql_connectors(hostname='localhost', port='8083'):
     url = f"http://{hostname}:{port}/connectors/"
     headers = {
@@ -39,3 +46,38 @@ class StreamFactory:
                 .schema(StructType.fromJson(schema))
                 .load()
         )
+
+
+class __ContextStringIO(BytesIO):
+    """
+    Wrapper to allow use of StringIO via 'with' constructs.
+    """
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+        return False
+
+
+@udf(returnType=StringType())
+def spark_avro_deserializer(value) -> json:
+    _MAGIC_BYTE = 0
+
+    if value is None:
+        return None
+
+    if len(value) <= 5:
+        raise SerializationError("Message too small. This message was not"
+                                 " produced with a Confluent"
+                                 " Schema Registry serializer")
+    with __ContextStringIO(value) as payload:
+        magic, schema_id = unpack('>bI', payload.read(5))
+        if magic != _MAGIC_BYTE:
+            raise SerializationError("Unknown magic byte. This message was"
+                                     " not produced with a Confluent"
+                                     " Schema Registry serializer")
+        parsed_schema = parse_schema(schema_registry.get_schema(schema_id))
+        obj_dict = schemaless_reader(payload, parsed_schema)
+        return json.dumps(obj_dict)

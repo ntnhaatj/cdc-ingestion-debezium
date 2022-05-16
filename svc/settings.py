@@ -1,5 +1,12 @@
 import os
 
+SCALA_VERSION = "2.12"
+SPARK_VERSION = "3.1.2"
+os.environ['PYSPARK_SUBMIT_ARGS'] = f"--packages " \
+                                    f"org.apache.spark:spark-avro_{SCALA_VERSION}:{SPARK_VERSION}," \
+                                    f"org.apache.spark:spark-sql-kafka-0-10_{SCALA_VERSION}:{SPARK_VERSION} " \
+                                    f"pyspark-shell"
+
 # Debezium Connector Settings
 DEBEZIUM_CONNECTOR_HOST = str(os.environ.get('DEBEZIUM_CONNECTOR_HOST'))
 DEBEZIUM_CONNECTOR_PORT = str(os.environ.get('DEBEZIUM_CONNECTOR_PORT'))

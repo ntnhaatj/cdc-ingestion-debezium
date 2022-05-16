@@ -1,0 +1,102 @@
+{
+  "type": "record",
+  "name": "customer",
+  "fields": [
+    {
+      "name": "before",
+      "type": {
+        "type":"record",
+        "name":"before",
+        "fields": [
+            {"type": "int32", "name": "id"},
+            {"type": "string", "name": "first_name"},
+            {"type": "string", "name": "last_name"},
+            {"type": "string", "name": "email"}
+        ]
+      }
+    },
+    {
+      "name": "after",
+      "type": {
+        "type": "record",
+        "name": "after",
+        "fields": [
+            {"type": "int32", "name": "id"},
+            {"type": "string", "name": "first_name"},
+            {"type": "string", "name": "last_name"},
+            {"type": "string", "name": "email"}
+        ]
+      }
+    },
+    {
+      "type": "record",
+      "name": "source",
+      "fields": [
+        {
+          "type": "string",
+          "name": "version"
+        },
+        {
+          "type": "string",
+          "name": "connector"
+        },
+        {
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "type": "int64",
+          "name": "ts_ms"
+        },
+        {
+          "type": "string",
+          "name": "snapshot"
+        },
+        {
+          "type": "string",
+          "name": "db"
+        },
+        {
+          "type": "string",
+          "name": "table"
+        },
+        {
+          "type": "int64",
+          "name": "server_id"
+        },
+        {
+          "type": "string",
+          "name": "gtid"
+        },
+        {
+          "type": "string",
+          "name": "file"
+        },
+        {
+          "type": "int64",
+          "name": "pos"
+        },
+        {
+          "type": "int32",
+          "name": "row"
+        },
+        {
+          "type": "int64",
+          "name": "thread"
+        },
+        {
+          "type": "string",
+          "name": "query"
+        }
+      ]
+    },
+    {
+      "type": "string",
+      "name": "op"
+    },
+    {
+      "type": "int64",
+      "name": "ts_ms"
+    }
+  ]
+}
