@@ -9,6 +9,7 @@ services:
       - 3888:3888
     env_file:
       - env/zookeeper.env
+    restart: always
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -20,6 +21,7 @@ services:
       - zookeeper
     env_file:
       - env/kafka.env
+    restart: always
 
   mysql:
     image: debezium/example-mysql:1.0
@@ -28,6 +30,7 @@ services:
       - 3306:3306
     env_file:
       - env/mysql.env
+    restart: always
 
   connect:
     image: debezium/connect:1.9
@@ -39,6 +42,7 @@ services:
       - mysql
     env_file:
       - env/connectors.env
+    restart: always
 
   schema-registry:
     image: confluentinc/cp-schema-registry
@@ -52,6 +56,7 @@ services:
       - SCHEMA_REGISTRY_HOST_NAME=schema-registry
       - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081
       - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=kafka:9092
+    restart: always
 
   streamsvc:
     image: cdc-ingestion

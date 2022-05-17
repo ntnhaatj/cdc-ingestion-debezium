@@ -3,6 +3,7 @@ import backoff
 import json
 from io import BytesIO
 from struct import unpack
+import logging
 
 from pyspark.sql.session import SparkSession
 from pyspark.sql.dataframe import DataFrame
@@ -19,13 +20,16 @@ from schemas import schema_registry
                       (Exception,),
                       factor=10,
                       max_tries=5)
-def configure_mysql_connectors(hostname='localhost', port='8083'):
+def configure_mysql_connectors(conf, hostname='localhost', port='8083'):
+    logging.info("configuring MySQL Kafka connectors")
+    logging.info(conf)
+
     url = f"http://{hostname}:{port}/connectors/"
     headers = {
         "accept": "application/json",
         "content-type": "application/json"
     }
-    return requests.post(url, data=json.dumps(settings.MYSQL_CONNECTOR_SETTING), headers=headers)
+    return requests.post(url, data=json.dumps(conf), headers=headers)
 
 
 class KafkaTopic:

@@ -1,6 +1,8 @@
 import requests
 import backoff
 import json
+import logging
+from svc.exceptions import SchemaRegistryError
 
 
 class SingletonMeta(type):
@@ -15,20 +17,27 @@ class SingletonMeta(type):
 
 
 class AvroSchemaRegistry(metaclass=SingletonMeta):
-    def __init__(self, url):
-        print(f"initializing local schema registry")
-        self.schemas = self._get_all_schemas(url)
-        print(f"done!\n{self.schemas}")
+    def __init__(self, base_url):
+        self.base_url = base_url
+        self.schemas = None
 
-    @staticmethod
     @backoff.on_exception(backoff.expo,
-                          (Exception,),
+                          (requests.exceptions.RequestException, SchemaRegistryError, ),
                           factor=10,
                           max_tries=5)
-    def _get_all_schemas(base_url):
-        endpoint_url = f'{base_url}/schemas'
+    def fetch_all_schemas(self):
+        logging.info(f"fetching schema registry")
+
+        endpoint_url = f'{self.base_url}/schemas'
         resp = requests.get(endpoint_url)
-        return json.loads(resp.content)
+        self.schemas = json.loads(resp.content)
+
+        if not self.schemas:
+            raise SchemaRegistryError()
+
+        logging.info(f"done!\n{self.schemas}")
+
+        return self.schemas
 
     def get_schema(self, schema_id) -> dict:
         try:
