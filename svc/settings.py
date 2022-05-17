@@ -1,10 +1,12 @@
 import os
 
+# Already downloaded in Dockerfile
 SCALA_VERSION = "2.12"
 SPARK_VERSION = "3.1.2"
 os.environ['PYSPARK_SUBMIT_ARGS'] = f"--packages " \
                                     f"org.apache.spark:spark-avro_{SCALA_VERSION}:{SPARK_VERSION}," \
-                                    f"org.apache.spark:spark-sql-kafka-0-10_{SCALA_VERSION}:{SPARK_VERSION} " \
+                                    f"org.apache.spark:spark-sql-kafka-0-10_{SCALA_VERSION}:{SPARK_VERSION}," \
+                                    f"mysql:mysql-connector-java:8.0.29 " \
                                     f"pyspark-shell"
 
 # Debezium Connector Settings
@@ -16,7 +18,7 @@ KAFKA_BOOSTRAP_SERVERS = str(os.environ.get('BOOTSTRAP_SERVERS'))
 # https://debezium.io/documentation/reference/stable/connectors/mysql.html#mysql-property-database-server-name
 CONNECTOR_NAMESPACE = "dbserver1"
 INCLUDED_DATABASE = "inventory"
-MYSQL_CONNECTOR_SETTING = {
+MYSQL_CONNECTOR_CONF = {
     "name": "inventory-connector",
     "config": {
         "connector.class": "io.debezium.connector.mysql.MySqlConnector",
