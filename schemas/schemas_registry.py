@@ -23,7 +23,7 @@ class AvroSchemaRegistry(metaclass=SingletonMeta):
 
     @backoff.on_exception(backoff.expo,
                           (requests.exceptions.RequestException, SchemaRegistryError, ),
-                          factor=10,
+                          factor=5,
                           max_tries=5)
     def fetch_all_schemas(self):
         logging.info(f"fetching schema registry")

@@ -18,7 +18,7 @@ from schemas import schema_registry
 
 @backoff.on_exception(backoff.expo,
                       (Exception,),
-                      factor=10,
+                      factor=5,
                       max_tries=5)
 def configure_mysql_connectors(conf, hostname='localhost', port='8083'):
     logging.info("configuring MySQL Kafka connectors")
