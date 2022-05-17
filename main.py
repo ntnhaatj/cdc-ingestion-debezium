@@ -2,80 +2,56 @@ import time
 import logging
 import os
 
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import from_json, col
-from pyspark.sql.types import StructType, StringType, LongType
 
 from svc.helpers import configure_mysql_connectors, KafkaTopic, spark_avro_deserializer
 from svc import settings
+from svc import writer
 from schemas import schema_registry
+from svc.schema import get_cdc_schema
 
 
 logging.basicConfig(level=logging.INFO)
 
 
-def get_customer_df(spark_session: SparkSession):
+def cdc_subscriber(table_name: str) -> DataFrame:
+    spark = SparkSession.builder.getOrCreate()
     df = (
-        spark_session.readStream
+        spark.readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", settings.KAFKA_BOOSTRAP_SERVERS)
-        .option("subscribe", KafkaTopic.from_table('customers'))
+        .option("subscribe", KafkaTopic.from_table(table_name))
         .option("failOnDataLoss", "false")
         .load()
     )
-    print(f"customer schema {df.printSchema()}")
+    logging.info(f"[{table_name} schema] {df.printSchema()}")
     return df
 
 
-def process(df):
-    json_schema = (
-        StructType()
-        .add("op", StringType())
-        .add("ts_ms", LongType())
-        .add("after", (
-            StructType()
-            .add("id", StringType())
-            .add("first_name", StringType())
-            .add("last_name", StringType())
-            .add("email", StringType())))
+def cdc_process(source_table_name):
+    df = cdc_subscriber(source_table_name)
+    cdc_schema = get_cdc_schema(source_table_name)
+    deserialized_df = (
+        df
+        .select(spark_avro_deserializer(col('value')).alias('value'))
+        .withColumn('value', from_json('value', cdc_schema))
+        .select('value.op', 'value.after.*', 'value.ts_ms')
     )
 
-    query = (
-        df.select(spark_avro_deserializer(col('value')).alias('value'))
-        .withColumn('json_value', from_json('value', json_schema))
-        .select('json_value.op', 'json_value.after.*', 'json_value.ts_ms')
+    mysql_writer = writer.get_jdbc_stream_writer(
+        deserialized_df,
+        f"{source_table_name}_cdc",
+        "com.mysql.jdbc.Driver",
+        "jdbc:mysql://mysql:3306/inventory?rewriteBatchedStatements=true",
+        os.environ.get('MYSQL_USER'),
+        os.environ.get('MYSQL_PASSWORD'),
     )
+    mysql_writer.start()
 
-    def foreach_batch_function(df, epoch_id):
-        properties = {
-            "user": os.environ.get('MYSQL_USER'),
-            "password": os.environ.get('MYSQL_PASSWORD'),
-        }
-        return (
-            df.write
-            .mode('append')
-            .option("driver", "com.mysql.jdbc.Driver")
-            .jdbc(url='jdbc:mysql://mysql:3306/inventory?rewriteBatchedStatements=true',
-                  table="mysql_cdc",
-                  properties=properties))
-
-    sql_writer = (
-        query
-        .writeStream
-        .outputMode("append")
-        .foreachBatch(foreach_batch_function)
-        .start()
-    )
-
-    console_writer = (
-        query
-        .writeStream
-        .format("console")
-        .option("truncate", False)
-        .start()
-    )
-
-    return query
+    console_writer = writer.get_console_stream_writer(deserialized_df)
+    console_writer.start()
+    return
 
 
 def main():
@@ -86,13 +62,8 @@ def main():
 
     schema_registry.fetch_all_schemas()
 
-    spark = (
-        SparkSession
-        .builder
-        .getOrCreate())
-    print(f"running spark version {spark.version}")
-
-    process(get_customer_df(spark))
+    for tb in ("customers", "addresses",):
+        cdc_process(tb)
 
     while True:
         time.sleep(1)
