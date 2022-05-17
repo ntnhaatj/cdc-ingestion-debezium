@@ -39,7 +39,7 @@ $ docker run -it --rm --name avro-consumer \
     --link kafka:kafka \
     --link mysql:mysql \
     --link schema-registry:schema-registry \
-    --network home_credit_test_default \
+    --network default \
     debezium/connect:1.9 \
     /kafka/bin/kafka-console-consumer.sh \
       --bootstrap-server kafka:9092 \
