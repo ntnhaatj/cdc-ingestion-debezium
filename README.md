@@ -32,8 +32,26 @@ $ docker-compose down
 ```
 
 ## Notes
-- to run `watcher` locally out of docker compose network, we should define `kafka` host in `/etc/hosts` to resolve name domain as kafka broker only setting for advertising `kafka:9092`.
+- to run kafka consumer on particular topic for debugging
 ```shell script
-[14:14]nhat.nguyen: test > cat /etc/hosts | grep kafka
-127.0.0.1 kafka
+$ docker run -it --rm --name avro-consumer \
+    --link zookeeper:zookeeper \
+    --link kafka:kafka \
+    --link mysql:mysql \
+    --link schema-registry:schema-registry \
+    --network home_credit_test_default \
+    debezium/connect:1.9 \
+    /kafka/bin/kafka-console-consumer.sh \
+      --bootstrap-server kafka:9092 \
+      --property print.key=true \
+      --formatter io.confluent.kafka.formatter.AvroMessageFormatter \
+      --property schema.registry.url=http://schema-registry:8081 \
+      --topic dbserver1.inventory.customers
+```
+
+- this solution haven't synchronous the startup progress for services, as well as auto reconnect if some cases, thus some unexpected cases could be happened without the error, just need to restart services below `in order`:
+```shell script
+$ docker-compose restart connect            # http://localhost:8083/connectors/ is empty
+$ docker-compose restart schema-registry    # http://localhost:8081/schemas/ is empty
+$ docker-compose restart streamsvc          # to configure mysql connector
 ```
