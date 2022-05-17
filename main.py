@@ -42,10 +42,10 @@ def cdc_process(source_table_name):
     mysql_writer = writer.get_jdbc_stream_writer(
         deserialized_df,
         f"{source_table_name}_cdc",
-        "com.mysql.jdbc.Driver",
-        "jdbc:mysql://mysql:3306/inventory?rewriteBatchedStatements=true",
-        os.environ.get('MYSQL_USER'),
-        os.environ.get('MYSQL_PASSWORD'),
+        settings.JDBC_CONFIG['driver'],
+        settings.JDBC_CONFIG['url'],
+        settings.DB_CONFIG['user'],
+        settings.DB_CONFIG['password'],
     )
     mysql_writer.start()
 

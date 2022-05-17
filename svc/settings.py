@@ -34,3 +34,17 @@ MYSQL_CONNECTOR_CONF = {
         "database.history.kafka.topic": "dbhistory.inventory",
     }
 }
+
+# JDBC settings for data stream writer
+JDBC_CONFIG = {
+    "driver": "com.mysql.jdbc.Driver",
+    "url": "jdbc:mysql://mysql:3306/inventory?rewriteBatchedStatements=true"
+}
+
+DB_CONFIG = {
+    "name": "mysql",
+    "host": os.environ.get('MYSQL_HOST'),
+    "port": os.environ.get('MYSQL_PORT'),
+    "user": os.environ.get('MYSQL_USER'),
+    "password": os.environ.get('MYSQL_PASSWORD'),
+}
