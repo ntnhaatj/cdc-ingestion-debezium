@@ -29,14 +29,14 @@ def cdc_subscriber(table_name: str) -> DataFrame:
     return df
 
 
-def cdc_process(source_table_name):
+def cdc_process(source_table_name) -> DataFrame:
     df = cdc_subscriber(source_table_name)
     cdc_schema = get_cdc_schema(source_table_name)
     deserialized_df = (
         df
         .select(spark_avro_deserializer(col('value')).alias('value'))
         .withColumn('value', from_json('value', cdc_schema))
-        .select('value.op', 'value.after.*', 'value.ts_ms')
+        .select('value.op', 'value.after.*', (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))
     )
 
     mysql_writer = writer.get_jdbc_stream_writer(
