@@ -64,7 +64,7 @@ def main():
         hostname=settings.DEBEZIUM_CONNECTOR_HOST,
         port=settings.DEBEZIUM_CONNECTOR_PORT)
 
-    schema_registry.fetch_all_schemas()
+    schema_registry.try_to_fetch_all_schemas()
 
     for tb in ("customers", "addresses",):
         cdc_process(tb)
