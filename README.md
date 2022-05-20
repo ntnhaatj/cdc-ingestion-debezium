@@ -1,4 +1,4 @@
-# CDC Ingestion Architecture
+# CDC Ingestion Architecture (Under Development)
 - This repo aims for implementing `Capturing Data Change` system by using [Debezium](https://debezium.io/) and Structured Spark Streaming.
 - Written in Python and used Docker Compose for demonstration.
 

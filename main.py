@@ -4,6 +4,7 @@ import os
 
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import from_json, col
+from pyspark.sql.types import TimestampType
 
 from svc.helpers import configure_mysql_connectors, KafkaTopic, spark_avro_deserializer
 from svc import settings
@@ -55,6 +56,9 @@ def cdc_process(source_table_name) -> DataFrame:
 
 
 def main():
+    # to wait for the demo system start
+    time.sleep(os.environ.get('IDLE_FOR_WAITING_SYSTEM_START_SECS', 0))
+
     configure_mysql_connectors(
         settings.MYSQL_CONNECTOR_CONF,
         hostname=settings.DEBEZIUM_CONNECTOR_HOST,
