@@ -11,7 +11,7 @@
 ├── env/                # service environments
 ├── main.py             # main spark streaming service
 ├── pyspark.Dockerfile  # base image for running spark streaming service
-├── schemas/            # predefined avro schemas
+├── schemas/            # avro schemas registry interfaces
 └── svc/                # service utility package
 ```
 
