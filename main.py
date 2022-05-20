@@ -57,7 +57,7 @@ def cdc_process(source_table_name) -> DataFrame:
 
 def main():
     # to wait for the demo system start
-    time.sleep(os.environ.get('IDLE_FOR_WAITING_SYSTEM_START_SECS', 0))
+    time.sleep(int(os.environ.get('IDLE_FOR_WAITING_SYSTEM_START_SECS'), 0))
 
     configure_mysql_connectors(
         settings.MYSQL_CONNECTOR_CONF,
