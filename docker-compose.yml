@@ -75,6 +75,7 @@ services:
       - env/kafka.env
       - env/mysql.env
       - env/connectors.env
+      - env/streamsvc.env
     restart: on-failure
 
   watcher:
