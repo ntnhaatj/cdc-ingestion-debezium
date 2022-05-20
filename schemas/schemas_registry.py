@@ -25,7 +25,7 @@ class AvroSchemaRegistry(metaclass=SingletonMeta):
                           (requests.exceptions.RequestException, SchemaRegistryError, ),
                           factor=5,
                           max_tries=5)
-    def fetch_all_schemas(self):
+    def try_to_fetch_all_schemas(self):
         logging.info(f"fetching schema registry")
 
         endpoint_url = f'{self.base_url}/schemas'
