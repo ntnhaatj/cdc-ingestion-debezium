@@ -39,6 +39,7 @@ services:
       - 8083:8083
     depends_on:
       - kafka
+      - schema-registry
       - mysql
     env_file:
       - env/connectors.env
@@ -50,7 +51,8 @@ services:
     ports:
       - 8081:8081
     depends_on:
-      - connect
+      - kafka
+      - zookeeper
     environment:
       - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=zookeeper:2181
       - SCHEMA_REGISTRY_HOST_NAME=schema-registry
@@ -66,11 +68,14 @@ services:
       dockerfile: pyspark.Dockerfile
     volumes:
       - ./:/app
-    command: ["./main.py"]
+    command: ["main.py",
+              "--cls", "svc.streams.CDCMySQLTable",
+              "--opts", "{\"app_name\": \"test\", \"table_name\": \"customers\"}"]
     depends_on:
       - kafka
       - mysql
       - connect
+      - schema-registry
     env_file:
       - env/kafka.env
       - env/mysql.env

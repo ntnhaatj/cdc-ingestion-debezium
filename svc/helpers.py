@@ -9,18 +9,18 @@ from pyspark.sql.session import SparkSession
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StructType, StringType
-from fastavro import (parse_schema, schemaless_reader)
+from fastavro import parse_schema, schemaless_reader
 
+import schemas
 from svc import settings
 from svc.exceptions import SerializationError
-from schemas import schema_registry
 
 
 @backoff.on_exception(backoff.expo,
                       (Exception,),
                       factor=5,
                       max_tries=5)
-def configure_mysql_connectors(conf, hostname='localhost', port='8083'):
+def try_configure_mysql_connectors(conf, hostname='localhost', port='8083'):
     logging.info("configuring MySQL Kafka connectors")
     logging.info(conf)
 
@@ -82,6 +82,6 @@ def spark_avro_deserializer(value) -> json:
             raise SerializationError("Unknown magic byte. This message was"
                                      " not produced with a Confluent"
                                      " Schema Registry serializer")
-        parsed_schema = parse_schema(schema_registry.get_schema(schema_id))
+        parsed_schema = parse_schema(schemas.get_schema(schema_id))
         obj_dict = schemaless_reader(payload, parsed_schema)
         return json.dumps(obj_dict)

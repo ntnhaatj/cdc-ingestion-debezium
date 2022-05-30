@@ -2,5 +2,5 @@ class SerializationError(Exception):
     pass
 
 
-class SchemaRegistryError(Exception):
+class PipelineOptionNotFound(Exception):
     pass

@@ -6,10 +6,9 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import from_json, col, expr
 from pyspark.sql.types import TimestampType, StructType
 
-from svc.helpers import KafkaTopic, spark_avro_deserializer, configure_mysql_connectors
+from svc.helpers import KafkaTopic, spark_avro_deserializer
 from svc.schema import get_cdc_schema
-from schemas import schema_registry
-from svc import settings, writer
+from svc import settings, writer, exceptions
 
 
 class ETLCDCPipeline(ABC):
@@ -18,22 +17,32 @@ class ETLCDCPipeline(ABC):
     Extract from multiple streams
     Transform and Load to sink
     """
+    # overwrite to validate required pipeline options
+    REQUIRED_OPTS = []
 
-    def __init__(self, app_name, *args, load_to_console: bool = False, **kwargs):
+    @classmethod
+    def __validate_opts(cls, **kwargs):
+        for o in cls.REQUIRED_OPTS:
+            if o not in kwargs.keys():
+                raise exceptions.PipelineOptionNotFound(o)
+
+    def __init__(self,
+                 app_name: str = 'ETL CDC pipeline',
+                 load_to_console: bool = False,
+                 **kwargs):
         """
         :param app_name: spark session name
         :param load_to_console: to load transformed result to console
         """
+        self.__validate_opts(**kwargs)
+
+        # set required opts to pipeline instance attributes
+        for o in self.REQUIRED_OPTS:
+            setattr(self, o, kwargs[o])
+
         self.app_name = app_name
         self.load_to_console = load_to_console
         self.spark = SparkSession.builder.appName(app_name).getOrCreate()
-
-        configure_mysql_connectors(
-            settings.MYSQL_CONNECTOR_CONF,
-            hostname=settings.DEBEZIUM_CONNECTOR_HOST,
-            port=settings.DEBEZIUM_CONNECTOR_PORT)
-
-        schema_registry.try_to_fetch_all_schemas()
 
     def _extract_from_kafka(self, table_name):
         df = (
@@ -82,10 +91,7 @@ class ETLCDCPipeline(ABC):
 
 class CDCMySQLTable(ETLCDCPipeline):
     """ ETL Pipeline for CDC Single Source MySQL Table """
-
-    def __init__(self, app_name: str, table_name: str):
-        self.table_name = table_name
-        super().__init__(app_name)
+    REQUIRED_OPTS = ['table_name']
 
     def extract(self) -> Tuple[DataFrame, ...]:
         """ extract cdc messages """
@@ -111,11 +117,7 @@ class CDCMySQLTable(ETLCDCPipeline):
 
 class ClickThroughRateStreaming(ETLCDCPipeline):
     """ ETL Pipeline for Click Through Rate Streaming Use Case using CDC """
-
-    def __init__(self, app_name: str, impression_table: str, click_table: str):
-        self.impression_table = impression_table
-        self.click_table = click_table
-        super().__init__(app_name)
+    REQUIRED_OPTS = ['impression_table', 'click_table']
 
     def extract(self) -> Tuple[DataFrame, ...]:
         """ Extract data from 2 CDC streams """

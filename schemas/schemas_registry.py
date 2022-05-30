@@ -1,8 +1,10 @@
 import requests
-import backoff
 import json
 import logging
-from svc.exceptions import SchemaRegistryError
+
+
+class SchemaRegistryError(Exception):
+    pass
 
 
 class SingletonMeta(type):
@@ -21,15 +23,15 @@ class AvroSchemaRegistry(metaclass=SingletonMeta):
         self.base_url = base_url
         self.schemas = None
 
-    @backoff.on_exception(backoff.expo,
-                          (requests.exceptions.RequestException, SchemaRegistryError, ),
-                          factor=5,
-                          max_tries=5)
-    def try_to_fetch_all_schemas(self):
+    def fetch_all_schemas(self):
         logging.info(f"fetching schema registry")
 
         endpoint_url = f'{self.base_url}/schemas'
         resp = requests.get(endpoint_url)
+
+        if resp.status_code != 200:
+            raise requests.exceptions.RequestException(f"unexpected response {resp.content}")
+
         self.schemas = json.loads(resp.content)
 
         if not self.schemas:
