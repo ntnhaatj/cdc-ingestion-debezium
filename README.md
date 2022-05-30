@@ -92,10 +92,3 @@ $ docker run -it --rm --name avro-consumer \
       --property schema.registry.url=http://schema-registry:8081 \
       --topic dbserver1.inventory.customers
 ```
-
-- this solution haven't synchronous the startup progress for services, as well as auto reconnect if some cases, thus some unexpected cases could be happened without the error, just need to restart services below `in order`:
-```shell script
-$ docker-compose restart connect            # http://localhost:8083/connectors/ is empty
-$ docker-compose restart schema-registry    # http://localhost:8081/schemas/ is empty
-$ docker-compose restart streamsvc          # to configure mysql connector
-```
