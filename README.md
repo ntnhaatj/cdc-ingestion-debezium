@@ -33,24 +33,35 @@ $ docker-compose down
 
 ## Use cases
 1) Table CDC Streaming
-- Usage
+  - To capture data change on specific table.
+  - Usage
 ```shell script
 $ python main.py \
       --cls "svc.streams.CDCMySQLTable" \
       --opts "{\"app_name\": \"Customers Table CDC Stream\", \"table_name\": \"customers\"}"
 ```
 
-- Tables with suffix `_cdc` is for capturing data changes on each source respectively
+  - Tables with suffix `_cdc` is for capturing data changes on each source respectively
 <img width="214" alt="Screen Shot 2022-05-18 at 09 27 15" src="https://user-images.githubusercontent.com/35696768/168944984-c93b83de-8f37-4b5e-adb2-3d93f71dc78e.png">
 
-- For instance `customers` table schema
+  - For instance `customers` table schema
 <img width="406" alt="Screen Shot 2022-05-18 at 09 27 40" src="https://user-images.githubusercontent.com/35696768/168945038-32464591-a78c-4e4a-b87b-dbda9070c8a8.png">
 
-- CDC schema of `customers` table
+  - CDC schema of `customers` table
 <img width="671" alt="Screen Shot 2022-05-18 at 09 27 34" src="https://user-images.githubusercontent.com/35696768/168945075-e6ba4cc8-6580-4652-9ac1-be2eb31d7241.png">
 
-- Notes:
-  * `op` field captured the action on source table: `u` -> update, `c` -> create, `d` -> update
+  - Notes:
+    * `op` field captured the action on source table: `u` -> update, `c` -> create, `d` -> update
+
+2) Click Through Rate Streaming (WIP)
+  - Join `Clicks` and `Impressions` stream to capture, calculate and stream the click through rate.
+  - Usage
+```shell script
+$ python main.py \
+      --cls "svc.streams.ClickThroughRateStreaming" \
+      --opts "{\"app_name\": \"Click Through Rate Stream\", \"click_table\": \"clicks\", \"impression_table\": \"impressions\"}"
+```
+  - [WIP] Populate dummy data
 
 ## Notes
 - to launch a concrete stream which attached to existing systems
